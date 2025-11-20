@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mirror Text / Tulisan Terbalik untuk Kamera Depan</title>
+  <style>
+    :root{
+      --bg:#111;
+      --fg:#fff;
+    }
+    html,body{
+      height:100%;
+      margin:0;
+      background:var(--bg);
+      color:var(--fg);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    .app{
+      min-height:100%;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      padding:14px;
+      box-sizing:border-box;
+    }
+
+    .controls{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-start;
+    }
+
+    input[type="text"]{
+      padding:10px;
+      font-size:16px;
+      border-radius:8px;
+      border:1px solid #333;
+      min-width:220px;
+      background:#fff;
+      color:#000;
+    }
+
+    .slider, .color, .btn{
+      padding:8px 10px;
+      border-radius:8px;
+      border:1px solid #333;
+      background:#222;
+      color:var(--fg);
+      cursor:pointer;
+    }
+
+    .preview-wrap{
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:240px;
+      position:relative;
+      overflow:hidden;
+      border-radius:8px;
+      border:1px dashed #333;
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.05));
+    }
+
+    .mirror {
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      transform: scaleX(-1);
+      user-select:none;
+      white-space:nowrap;
+      overflow:hidden;
+      padding:12px;
+      box-sizing:border-box;
+      width:100%;
+      height:100%;
+    }
+
+    .mirror .inner {
+      transform: scaleX(-1);
+      display:inline-block;
+      white-space:nowrap;
+    }
+
+    .mirrored-text {
+      font-weight:800;
+      letter-spacing:2px;
+      line-height:1;
+      font-size:calc(8vw + 8vh);
+      text-transform:uppercase;
+      word-break:break-word;
+    }
+
+    .bottom-row{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      background:#0b84ff;
+      color:#fff;
+      border:none;
+    }
+
+    .toggle{
+      display:inline-flex;
+      gap:6px;
+      align-items:center;
+      padding:6px 8px;
+      border-radius:8px;
+      background:#222;
+      border:1px solid #333;
+      color:var(--fg);
+      cursor:pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+
+    <div class="controls">
+      <label for="txt">Teks:</label>
+      <input id="txt" type="text" value="AMBULAN" maxlength="40" />
+
+      <label for="size">Ukuran:</label>
+      <input id="size" class="slider" type="range" min="40" max="300" value="120" />
+
+      <label for="col">Warna:</label>
+      <input id="col" class="color" type="color" value="#ffffff" />
+
+      <button id="toggleMirror" class="toggle">Mirror: <strong id="mirrorState">ON</strong></button>
+
+      <button id="fs" class="btn">Layar Penuh</button>
+
+      <!-- ⭐ Tombol copy hasil mirror -->
+      <button id="copyMirror" class="btn">Copy Hasil Mirror</button>
+    </div>
+
+    <div class="preview-wrap" id="previewWrap">
+      <div class="mirror" id="mirrorBox">
+        <div class="inner">
+          <div id="mirroredText" class="mirrored-text">AMBULAN</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-row">
+      <div style="opacity:0.8;font-size:13px">Petunjuk: Ketik teks > pastikan "Mirror" ON > arahkan ke kamera depan HP.</div>
+      <div style="display:flex;gap:8px">
+        <button id="increase" class="btn">A+</button>
+        <button id="decrease" class="btn">A-</button>
+        <button id="reset" class="btn">Reset</button>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+  const txt = document.getElementById('txt');
+  const mirroredText = document.getElementById('mirroredText');
+  const sizeSlider = document.getElementById('size');
+  const colorPicker = document.getElementById('col');
+  const mirrorBox = document.getElementById('mirrorBox');
+  const mirrorState = document.getElementById('mirrorState');
+  const toggleMirror = document.getElementById('toggleMirror');
+  const fsBtn = document.getElementById('fs');
+
+  function updateText(){ mirroredText.textContent = txt.value || ' '; }
+  txt.addEventListener('input', updateText); updateText();
+
+  function updateSize(){
+    const v = parseInt(sizeSlider.value,10);
+    mirroredText.style.fontSize = v + 'px';
+  }
+  sizeSlider.addEventListener('input', updateSize); updateSize();
+
+  colorPicker.addEventListener('input', ()=> mirroredText.style.color = colorPicker.value );
+  mirroredText.style.color = colorPicker.value;
+
+  let mirrored = true;
+  toggleMirror.addEventListener('click', ()=>{
+    mirrored = !mirrored;
+    mirrorBox.style.transform = mirrored ? 'scaleX(-1)' : 'none';
+    mirrorState.textContent = mirrored ? 'ON' : 'OFF';
+  });
+
+  fsBtn.addEventListener('click', ()=>{
+    const el = document.documentElement;
+    if(!document.fullscreenElement) el.requestFullscreen();
+    else document.exitFullscreen();
+  });
+
+  // ================================
+  // ⭐ FITUR COPY HASIL MIRROR (TAMBAHAN)
+  // ================================
+  document.getElementById("copyMirror").addEventListener("click", () => {
+    const text = txt.value;
+
+    // Membuat versi teks terbalik (dibalik hurufnya)
+    const reversed = text.split("").reverse().join("");
+
+    navigator.clipboard.writeText(reversed)
+      .then(() => alert("Hasil mirror berhasil disalin:\n\n" + reversed))
+      .catch(() => alert("Gagal menyalin."));
+  });
+  // ================================
+
+  // A+ / A-
+  increase.addEventListener('click', ()=>{ sizeSlider.value = Math.min(300, +sizeSlider.value + 10); updateSize(); });
+  decrease.addEventListener('click', ()=>{ sizeSlider.value = Math.max(40, +sizeSlider.value - 10); updateSize(); });
+
+  reset.addEventListener('click', ()=>{
+    txt.value = 'AMBULAN';
+    sizeSlider.value = 120;
+    colorPicker.value = '#ffffff';
+    mirrored = true;
+    mirrorBox.style.transform = 'scaleX(-1)';
+    mirrorState.textContent = 'ON';
+    updateText(); updateSize();
+    mirroredText.style.color = colorPicker.value;
+  });
+
+  document.getElementById('previewWrap').addEventListener('click', ()=> txt.focus() );
+  txt.focus();
+</script>
+</body>
+</html>
